@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>SOLARIS DRIFT — Combate &amp; Corrida Espacial 3D</title>
+  <meta name="description" content="SOLARIS DRIFT é um jogo arcade de ação e combate espacial em WebGL 3D. Escolha seu caça estelar, atravesse o cânion orbital, colete anéis dourados e enfrente couraçados." />
+  <meta name="theme-color" content="#07111c" />
+  <meta property="og:title" content="SOLARIS DRIFT — Combate Espacial 3D" />
+  <meta property="og:description" content="Jogo arcade 3D em WebGL jogável no navegador e no celular. 3 naves, cânion orbital procedural, chefões e áudio sintetizado." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307111c'/%3E%3Cpolygon points='32,8 54,50 32,40 10,50' fill='%23f59e0b'/%3E%3Cpolygon points='32,16 42,40 32,35 22,40' fill='%2338bdf8'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="game-root" tabindex="0">
+    <!-- WebGL 3D Scene -->
+    <canvas id="gl-canvas" aria-label="Cena 3D do jogo SOLARIS DRIFT"></canvas>
+    <!-- 2D Tactical Reticle & Floating Popups Overlay -->
+    <canvas id="hud-canvas"></canvas>
+
+    <!-- In-Game HUD -->
+    <section id="hud-layer" class="hud-layer" aria-label="Painel de voo">
+      <!-- Top Row -->
+      <div class="hud-top">
+        <!-- Score & Sector -->
+        <div class="glass-subtle score-box">
+          <div class="score-meta">
+            <span id="hud-sector">SETOR 01</span>
+            <span id="hud-combo" class="mono text-amber">×1</span>
+          </div>
+          <div id="hud-score" class="mono score-value">000000</div>
+          <div class="score-footer">
+            <span id="hud-sector-name" class="truncate">Órbita Solaris</span>
+            <span class="mono text-light">REC <span id="hud-best">0</span></span>
+          </div>
+        </div>
+
+        <!-- Center: Sector Progress OR Boss Integrity -->
+        <div class="hud-center">
+          <div id="sector-progress-wrap" class="sector-progress">
+            <div class="bar-header">
+              <span>Progresso do Setor</span>
+              <span id="hud-speed" class="mono text-sky">MACH 4.2</span>
+            </div>
+            <div class="track track-sm">
+              <div id="hud-sector-bar" class="fill fill-sky" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div id="boss-bar-wrap" class="glass-subtle boss-bar hidden">
+            <div class="boss-bar-header">
+              <span id="boss-name">COURAÇADO LEVIATHAN</span>
+              <span id="boss-cores-left" class="mono text-amber-soft">3 NÚCLEOS</span>
+            </div>
+            <div class="track track-md">
+              <div id="boss-hp-bar" class="fill fill-red" style="width: 100%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top-Right Action Controls -->
+        <div class="hud-actions">
+          <button id="btn-autofire" type="button" class="btn-ghost btn-hud" title="Alternar Tiro Automático (F)">
+            Auto-Tiro: OFF
+          </button>
+          <button id="btn-mute" type="button" class="btn-ghost btn-hud" title="Som (M)">
+            Som: ON
+          </button>
+          <button id="btn-pause" type="button" class="btn-ghost btn-hud" title="Pausar (P / Esc)">
+            Pausa
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic Event Announcement Banner -->
+      <div id="event-banner" class="glass-panel event-banner banner-hidden" role="status" aria-live="polite">
+        <div id="banner-sub" class="banner-sub">SETOR 01</div>
+        <div id="banner-title" class="banner-title">ÓRBITA SOLARIS</div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div class="hud-bottom">
+        <!-- Ship Telemetry -->
+        <div class="glass-subtle telemetry-box">
+          <div>
+            <div class="telemetry-header">
+              <span>Integridade do Escudo</span>
+              <span id="hud-shield-text" class="mono text-sky font-bold">4 / 4</span>
+            </div>
+            <div id="hud-shield-pips" class="shield-pips"></div>
+          </div>
+
+          <div class="telemetry-grid">
+            <div>
+              <div class="micro-header">
+                <span>Turbo</span>
+                <span class="mono text-amber-soft">SHIFT</span>
+              </div>
+              <div class="track track-sm">
+                <div id="hud-boost-bar" class="fill fill-amber" style="width: 100%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="micro-header">
+                <span>Esquiva 360°</span>
+                <span id="hud-roll-status" class="mono text-emerald">OK</span>
+              </div>
+              <div class="track track-sm">
+                <div id="hud-roll-bar" class="fill fill-emerald" style="width: 100%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="hud-powerup-row" class="powerup-row hidden">
+            <div class="powerup-header">
+              <span id="hud-powerup-label">CANHÃO TRIPLO</span>
+              <span id="hud-powerup-time" class="mono">8.0s</span>
+            </div>
+            <div class="track track-xs">
+              <div id="hud-powerup-bar" class="fill fill-amber" style="width: 100%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop Controls Legend -->
+        <div class="glass-subtle controls-hint">
+          <span><span class="keycap">WASD</span> / <span class="keycap">↑↓←→</span> Mover</span>
+          <span><span class="keycap">ESPAÇO</span> Atirar</span>
+          <span><span class="keycap">SHIFT</span> Turbo</span>
+          <span><span class="keycap">E</span> / <span class="keycap">Botão Dir.</span> Manobra</span>
+        </div>
+
+        <!-- Mobile / Touch Quick Actions -->
+        <div id="mobile-actions" class="touch-actions">
+          <button id="touch-roll" type="button" class="touch-btn">360°</button>
+          <button id="touch-boost" type="button" class="touch-btn">Turbo</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TITLE SCREEN -->
+    <section id="screen-title" class="screen-overlay screen-title" aria-label="Tela inicial">
+      <div class="title-wrap">
+        <p class="eyebrow">Combate &amp; Corrida Espacial 3D</p>
+        <h1 class="hero-title">SOLARIS DRIFT</h1>
+        <p class="hero-desc">
+          Atravesse o cânion orbital em velocidade supersônica, destrua esquadrões inimigos e enfrente couraçados 3D. Passe pelos anéis dourados para multiplicar sua pontuação.
+        </p>
+
+        <div class="selector-section">
+          <div class="selector-label">Escolha seu Caça Estelar</div>
+          <div id="ship-selector" class="ship-grid"></div>
+        </div>
+
+        <div class="title-actions">
+          <button id="btn-start" type="button" class="btn-primary btn-lg">Iniciar Missão</button>
+          <button id="btn-mouse-mode" type="button" class="btn-ghost btn-lg-ghost">Mouse Livre: OFF</button>
+        </div>
+
+        <div id="title-record" class="record-line mono hidden">
+          Melhor Recorde: <span id="title-record-val" class="text-amber font-bold">0</span> pts · Setor <span id="title-sector-val" class="text-sky font-bold">1</span>
+        </div>
+
+        <div class="glass-subtle title-controls">
+          <span><span class="keycap">WASD</span> / <span class="keycap">Setas</span> ou arrastar</span>
+          <span><span class="keycap">Espaço</span> / <span class="keycap">Clique</span> Atirar</span>
+          <span><span class="keycap">Shift</span> Turbo 2× Pontos</span>
+          <span><span class="keycap">E</span> / <span class="keycap">Clique Dir.</span> Manobra 360°</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAUSE SCREEN -->
+    <section id="screen-pause" class="screen-overlay screen-modal hidden-screen" aria-label="Menu de pausa">
+      <div class="glass-panel modal-card modal-sm">
+        <div>
+          <p class="modal-eyebrow text-sky">Simulação Suspensa</p>
+          <h2 class="modal-title">Pausado</h2>
+        </div>
+
+        <div class="modal-stack">
+          <button id="btn-resume" type="button" class="btn-primary btn-full">Continuar Voo</button>
+          <button id="btn-pause-mouse" type="button" class="btn-ghost btn-full">Pilotar com Mouse Livre: OFF</button>
+          <button id="btn-pause-autofire" type="button" class="btn-ghost btn-full">Tiro Automático: OFF</button>
+          <button id="btn-restart-pause" type="button" class="btn-ghost btn-full">Reiniciar Missão</button>
+          <button id="btn-menu-pause" type="button" class="btn-ghost btn-full text-muted">Trocar de Nave</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- GAME OVER SCREEN -->
+    <section id="screen-gameover" class="screen-overlay screen-modal hidden-screen" aria-label="Fim de jogo">
+      <div class="glass-panel modal-card modal-md">
+        <p class="modal-eyebrow text-red">Sinal Perdido</p>
+        <h2 class="modal-title modal-title-lg">Fim de Missão</h2>
+
+        <div class="score-summary">
+          <div class="summary-label">Pontuação Final</div>
+          <div id="go-score" class="mono summary-score">0</div>
+          <div id="go-new-record" class="new-record hidden">Novo Recorde Pessoal</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-tile">
+            <div class="stat-label">Setor Alcançado</div>
+            <div id="go-sector" class="mono stat-val">01</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label">Inimigos Abatidos</div>
+            <div id="go-kills" class="mono stat-val">0</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label">Anéis Coletados</div>
+            <div id="go-rings" class="mono stat-val text-sky">0</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label">Combo Máximo</div>
+            <div id="go-maxcombo" class="mono stat-val text-amber-soft">×1</div>
+          </div>
+        </div>
+
+        <div class="go-actions">
+          <button id="btn-retry" type="button" class="btn-primary btn-grow">Jogar Novamente</button>
+          <button id="btn-go-menu" type="button" class="btn-ghost btn-hangar">Hangar</button>
+        </div>
+        <p class="go-hint">Pressione <span class="keycap">Enter</span> ou <span class="keycap">Espaço</span> para reiniciar rápido</p>
+      </div>
+    </section>
+
+    <!-- WebGL Fallback -->
+    <div id="webgl-error" class="webgl-error hidden">
+      <div class="glass-panel modal-card modal-sm">
+        <h2 class="modal-title text-amber">WebGL Indisponível</h2>
+        <p class="hero-desc" style="margin-top: 8px;">
+          Seu navegador não pôde inicializar o contexto WebGL 3D. Verifique se a aceleração de hardware está ativada e recarregue a página.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
