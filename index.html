@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>SOLARIS DRIFT — Combate &amp; Corrida Espacial 3D</title>
-  <meta name="description" content="SOLARIS DRIFT é um jogo arcade de ação e combate espacial em WebGL 3D. Escolha seu caça estelar, atravesse o cânion orbital, colete anéis dourados e enfrente couraçados." />
+  <title>SOLARIS DRIFT — Combate &amp; Exploração Espacial 3D</title>
+  <meta name="description" content="SOLARIS DRIFT é um jogo espacial 3D em WebGL com 5 regiões cósmicas, naves Heliotech personalizáveis, exploração de relíquias, missões especiais e chefões únicos." />
   <meta name="theme-color" content="#07111c" />
-  <meta property="og:title" content="SOLARIS DRIFT — Combate Espacial 3D" />
-  <meta property="og:description" content="Jogo arcade 3D em WebGL jogável no navegador e no celular. 3 naves, cânion orbital procedural, chefões e áudio sintetizado." />
+  <meta property="og:title" content="SOLARIS DRIFT — Combate & Exploração Espacial 3D" />
+  <meta property="og:description" content="Nebulosas procedurais, planetas gigantes atmosféricos, bloom cinematográfico, 5 regiões espaciais, Hangar 3D e chefões exclusivos no navegador e celular." />
   <meta property="og:type" content="website" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307111c'/%3E%3Cpolygon points='32,8 54,50 32,40 10,50' fill='%23f59e0b'/%3E%3Cpolygon points='32,16 42,40 32,35 22,40' fill='%2338bdf8'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -16,14 +17,13 @@
   <main id="game-root" tabindex="0">
     <!-- WebGL 3D Scene -->
     <canvas id="gl-canvas" aria-label="Cena 3D do jogo SOLARIS DRIFT"></canvas>
-    <!-- 2D Tactical Reticle & Floating Popups Overlay -->
+    <!-- 2D Tactical Overlay -->
     <canvas id="hud-canvas"></canvas>
 
-    <!-- In-Game HUD -->
+    <!-- IN-GAME HUD -->
     <section id="hud-layer" class="hud-layer" aria-label="Painel de voo">
       <!-- Top Row -->
       <div class="hud-top">
-        <!-- Score & Sector -->
         <div class="glass-subtle score-box">
           <div class="score-meta">
             <span id="hud-sector">SETOR 01</span>
@@ -32,11 +32,11 @@
           <div id="hud-score" class="mono score-value">000000</div>
           <div class="score-footer">
             <span id="hud-sector-name" class="truncate">Órbita Solaris</span>
-            <span class="mono text-light">REC <span id="hud-best">0</span></span>
+            <span class="mono text-amber-soft" id="hud-credits">0 CR</span>
           </div>
+          <div class="score-subrec mono">REC <span id="hud-best">0</span></div>
         </div>
 
-        <!-- Center: Sector Progress OR Boss Integrity -->
         <div class="hud-center">
           <div id="sector-progress-wrap" class="sector-progress">
             <div class="bar-header">
@@ -57,23 +57,18 @@
               <div id="boss-hp-bar" class="fill fill-red" style="width: 100%"></div>
             </div>
           </div>
+
+          <div id="hud-mission-pill" class="mission-pill hidden">MISSÃO ATIVA</div>
         </div>
 
-        <!-- Top-Right Action Controls -->
         <div class="hud-actions">
-          <button id="btn-autofire" type="button" class="btn-ghost btn-hud" title="Alternar Tiro Automático (F)">
-            Auto-Tiro: OFF
-          </button>
-          <button id="btn-mute" type="button" class="btn-ghost btn-hud" title="Som (M)">
-            Som: ON
-          </button>
-          <button id="btn-pause" type="button" class="btn-ghost btn-hud" title="Pausar (P / Esc)">
-            Pausa
-          </button>
+          <button id="btn-autofire" type="button" class="btn-ghost btn-hud" title="Alternar Tiro Automático (F)">Auto-Tiro: OFF</button>
+          <button id="btn-mute" type="button" class="btn-ghost btn-hud" title="Som (M)">Som: ON</button>
+          <button id="btn-pause" type="button" class="btn-ghost btn-hud" title="Pausar (P / Esc)">Pausa</button>
         </div>
       </div>
 
-      <!-- Dynamic Event Announcement Banner -->
+      <!-- Event Announcement Banner -->
       <div id="event-banner" class="glass-panel event-banner banner-hidden" role="status" aria-live="polite">
         <div id="banner-sub" class="banner-sub">SETOR 01</div>
         <div id="banner-title" class="banner-title">ÓRBITA SOLARIS</div>
@@ -81,17 +76,16 @@
 
       <!-- Bottom Row -->
       <div class="hud-bottom">
-        <!-- Ship Telemetry -->
         <div class="glass-subtle telemetry-box">
           <div>
             <div class="telemetry-header">
-              <span>Integridade do Escudo</span>
+              <span>Escudo</span>
               <span id="hud-shield-text" class="mono text-sky font-bold">4 / 4</span>
             </div>
             <div id="hud-shield-pips" class="shield-pips"></div>
           </div>
 
-          <div class="telemetry-grid">
+          <div class="telemetry-grid-3">
             <div>
               <div class="micro-header">
                 <span>Turbo</span>
@@ -103,11 +97,20 @@
             </div>
             <div>
               <div class="micro-header">
-                <span>Esquiva 360°</span>
+                <span>360°</span>
                 <span id="hud-roll-status" class="mono text-emerald">OK</span>
               </div>
               <div class="track track-sm">
                 <div id="hud-roll-bar" class="fill fill-emerald" style="width: 100%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="micro-header">
+                <span>Mísseis</span>
+                <span id="hud-missile-status" class="mono text-amber-soft">R</span>
+              </div>
+              <div class="track track-sm">
+                <div id="hud-missile-bar" class="fill fill-amber" style="width: 100%"></div>
               </div>
             </div>
           </div>
@@ -123,16 +126,16 @@
           </div>
         </div>
 
-        <!-- Desktop Controls Legend -->
         <div class="glass-subtle controls-hint">
           <span><span class="keycap">WASD</span> / <span class="keycap">↑↓←→</span> Mover</span>
           <span><span class="keycap">ESPAÇO</span> Atirar</span>
+          <span><span class="keycap">R</span> Mísseis</span>
           <span><span class="keycap">SHIFT</span> Turbo</span>
-          <span><span class="keycap">E</span> / <span class="keycap">Botão Dir.</span> Manobra</span>
+          <span><span class="keycap">E</span> 360°</span>
         </div>
 
-        <!-- Mobile / Touch Quick Actions -->
         <div id="mobile-actions" class="touch-actions">
+          <button id="touch-missile" type="button" class="touch-btn touch-amber">Míssil</button>
           <button id="touch-roll" type="button" class="touch-btn">360°</button>
           <button id="touch-boost" type="button" class="touch-btn">Turbo</button>
         </div>
@@ -142,32 +145,110 @@
     <!-- TITLE SCREEN -->
     <section id="screen-title" class="screen-overlay screen-title" aria-label="Tela inicial">
       <div class="title-wrap">
-        <p class="eyebrow">Combate &amp; Corrida Espacial 3D</p>
+        <div class="title-top-bar">
+          <span class="eyebrow">Expedição &amp; Combate Espacial 3D</span>
+          <span id="title-credits" class="mono credit-badge">0 CR</span>
+        </div>
+
         <h1 class="hero-title">SOLARIS DRIFT</h1>
         <p class="hero-desc">
-          Atravesse o cânion orbital em velocidade supersônica, destrua esquadrões inimigos e enfrente couraçados 3D. Passe pelos anéis dourados para multiplicar sua pontuação.
+          Explore 5 regiões cósmicas, escaneie relíquias ancestrais, evolua sua frota Heliotech no Hangar 3D e enfrente chefões colossais.
         </p>
 
+        <!-- Starting Region Selector -->
         <div class="selector-section">
-          <div class="selector-label">Escolha seu Caça Estelar</div>
+          <div class="selector-label">Região de Partida</div>
+          <div id="region-selector" class="region-strip"></div>
+        </div>
+
+        <!-- Ship Selector -->
+        <div class="selector-section">
+          <div class="selector-label">Frota Heliotech</div>
           <div id="ship-selector" class="ship-grid"></div>
         </div>
 
+        <!-- Primary Actions -->
         <div class="title-actions">
-          <button id="btn-start" type="button" class="btn-primary btn-lg">Iniciar Missão</button>
-          <button id="btn-mouse-mode" type="button" class="btn-ghost btn-lg-ghost">Mouse Livre: OFF</button>
+          <button id="btn-start" type="button" class="btn-primary btn-lg">Iniciar Expedição</button>
+          <button id="btn-open-hangar" type="button" class="btn-ghost btn-lg-ghost">Hangar 3D &amp; Upgrades</button>
+          <button id="btn-open-codex" type="button" class="btn-ghost btn-lg-ghost">Códice Estelar</button>
         </div>
 
-        <div id="title-record" class="record-line mono hidden">
-          Melhor Recorde: <span id="title-record-val" class="text-amber font-bold">0</span> pts · Setor <span id="title-sector-val" class="text-sky font-bold">1</span>
+        <div class="title-utility-row">
+          <button id="btn-mouse-mode" type="button" class="btn-ghost btn-xs">Mouse Livre: OFF</button>
+          <button id="btn-quality-title" type="button" class="btn-ghost btn-xs">Gráficos: Auto</button>
+          <span id="title-record" class="record-line mono hidden">
+            Recorde: <strong id="title-record-val" class="text-amber">0</strong> · Setor <strong id="title-sector-val" class="text-sky">1</strong>
+          </span>
         </div>
 
         <div class="glass-subtle title-controls">
           <span><span class="keycap">WASD</span> / <span class="keycap">Setas</span> ou arrastar</span>
           <span><span class="keycap">Espaço</span> / <span class="keycap">Clique</span> Atirar</span>
-          <span><span class="keycap">Shift</span> Turbo 2× Pontos</span>
-          <span><span class="keycap">E</span> / <span class="keycap">Clique Dir.</span> Manobra 360°</span>
+          <span><span class="keycap">R</span> Mísseis</span>
+          <span><span class="keycap">Shift</span> Turbo</span>
+          <span><span class="keycap">E</span> / <span class="keycap">Clique Dir.</span> 360°</span>
         </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE 3D HANGAR SCREEN -->
+    <section id="screen-hangar" class="screen-overlay screen-hangar hidden-screen" aria-label="Hangar 3D">
+      <div class="hangar-layout">
+        <div class="hangar-stage-hint">Arraste a tela para girar sua nave em 360°</div>
+
+        <aside class="glass-panel hangar-drawer">
+          <div class="drawer-header">
+            <div>
+              <p class="modal-eyebrow text-amber">Hangar Heliotech</p>
+              <h2 class="drawer-title">Frota &amp; Sistemas</h2>
+            </div>
+            <div class="drawer-right">
+              <span id="hangar-credits" class="mono credit-badge">0 CR</span>
+              <button id="btn-close-hangar" type="button" class="btn-ghost btn-sm">Voltar</button>
+            </div>
+          </div>
+
+          <div class="drawer-scroll">
+            <h3 class="section-heading">Naves Espaciais</h3>
+            <div id="hangar-ships" class="hangar-list"></div>
+
+            <h3 class="section-heading">Upgrades Permanentes</h3>
+            <div id="hangar-upgrades" class="hangar-list"></div>
+
+            <h3 class="section-heading">Pintura &amp; Propulsores</h3>
+            <div id="hangar-skins" class="skin-grid"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- STAR CODEX SCREEN -->
+    <section id="screen-codex" class="screen-overlay screen-modal hidden-screen" aria-label="Códice Estelar">
+      <div class="glass-panel modal-card modal-lg">
+        <div class="drawer-header">
+          <div style="text-align:left">
+            <p class="modal-eyebrow text-sky">Arquivo de Exploração</p>
+            <h2 class="drawer-title">Códice Estelar</h2>
+          </div>
+          <div class="drawer-right">
+            <span id="codex-count" class="mono text-amber-soft" style="font-size:12px;">0 / 11</span>
+            <button id="btn-close-codex" type="button" class="btn-ghost btn-sm">Fechar</button>
+          </div>
+        </div>
+        <div id="codex-list" class="codex-grid"></div>
+      </div>
+    </section>
+
+    <!-- STAR MAP ROUTE SELECTOR (BETWEEN SECTORS!) -->
+    <section id="screen-starmap" class="screen-overlay screen-modal hidden-screen" aria-label="Mapa Estelar">
+      <div class="glass-panel modal-card modal-lg">
+        <p class="modal-eyebrow text-amber">Setor Conquistado · Salto Hiperespacial Pronto</p>
+        <h2 class="modal-title modal-title-lg">Escolha a Próxima Rota</h2>
+        <p class="hero-desc" style="margin: 8px auto 0;">
+          Seu escudo foi parcialmente restaurado e os mísseis recarregados. Defina o próximo destino no mapa estelar:
+        </p>
+        <div id="starmap-routes" class="routes-grid"></div>
       </div>
     </section>
 
@@ -181,23 +262,25 @@
 
         <div class="modal-stack">
           <button id="btn-resume" type="button" class="btn-primary btn-full">Continuar Voo</button>
-          <button id="btn-pause-mouse" type="button" class="btn-ghost btn-full">Pilotar com Mouse Livre: OFF</button>
+          <button id="btn-pause-mouse" type="button" class="btn-ghost btn-full">Mouse Livre: OFF</button>
           <button id="btn-pause-autofire" type="button" class="btn-ghost btn-full">Tiro Automático: OFF</button>
-          <button id="btn-restart-pause" type="button" class="btn-ghost btn-full">Reiniciar Missão</button>
-          <button id="btn-menu-pause" type="button" class="btn-ghost btn-full text-muted">Trocar de Nave</button>
+          <button id="btn-pause-quality" type="button" class="btn-ghost btn-full">Qualidade Gráfica: Auto</button>
+          <button id="btn-restart-pause" type="button" class="btn-ghost btn-full">Reiniciar Expedição</button>
+          <button id="btn-menu-pause" type="button" class="btn-ghost btn-full text-muted">Menu Principal</button>
         </div>
       </div>
     </section>
 
     <!-- GAME OVER SCREEN -->
-    <section id="screen-gameover" class="screen-overlay screen-modal hidden-screen" aria-label="Fim de jogo">
+    <section id="screen-gameover" class="screen-overlay screen-modal hidden-screen" aria-label="Fim de missão">
       <div class="glass-panel modal-card modal-md">
         <p class="modal-eyebrow text-red">Sinal Perdido</p>
-        <h2 class="modal-title modal-title-lg">Fim de Missão</h2>
+        <h2 class="modal-title modal-title-lg">Fim de Expedição</h2>
 
         <div class="score-summary">
           <div class="summary-label">Pontuação Final</div>
           <div id="go-score" class="mono summary-score">0</div>
+          <div class="summary-sub mono text-amber-soft">Créditos Ganhos: <strong id="go-credits">+0 CR</strong></div>
           <div id="go-new-record" class="new-record hidden">Novo Recorde Pessoal</div>
         </div>
 
@@ -221,8 +304,8 @@
         </div>
 
         <div class="go-actions">
-          <button id="btn-retry" type="button" class="btn-primary btn-grow">Jogar Novamente</button>
-          <button id="btn-go-menu" type="button" class="btn-ghost btn-hangar">Hangar</button>
+          <button id="btn-retry" type="button" class="btn-primary btn-grow">Voar Novamente</button>
+          <button id="btn-go-hangar" type="button" class="btn-ghost btn-hangar">Hangar &amp; Upgrades</button>
         </div>
         <p class="go-hint">Pressione <span class="keycap">Enter</span> ou <span class="keycap">Espaço</span> para reiniciar rápido</p>
       </div>
@@ -239,6 +322,6 @@
     </div>
   </main>
 
-  <script src="game.js"></script>
+  <script type="module" src="js/game.js"></script>
 </body>
 </html>

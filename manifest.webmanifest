@@ -1,0 +1,10 @@
+{
+  "name": "SOLARIS DRIFT 3D",
+  "short_name": "Solaris Drift",
+  "description": "Combate, exploração espacial e chefões em WebGL 3D.",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#07111c",
+  "theme_color": "#07111c"
+}
